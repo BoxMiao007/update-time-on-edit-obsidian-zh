@@ -1,6 +1,7 @@
 import { App, PluginSettingTab, SearchComponent, Setting } from 'obsidian';
 import UpdateTimeOnSavePlugin from './main';
 import { FolderSuggest } from './suggesters/FolderSuggester';
+import { FileSuggest } from './suggesters/FileSuggester';
 import { onlyUniqueArray } from './utils';
 import { format } from 'date-fns';
 import { UpdateAllModal } from './UpdateAllModal';
@@ -16,6 +17,7 @@ export interface UpdateTimeOnEditSettings {
   // Union because of legacy
   ignoreGlobalFolder?: string | string[];
   ignoreCreatedFolder?: string[];
+  ignoreFiles?: string[];
 
   enableExperimentalHash?: boolean;
   fileHashMap: Record<string, string>;
@@ -30,6 +32,7 @@ export const DEFAULT_SETTINGS: UpdateTimeOnEditSettings = {
   minMinutesBetweenSaves: 1,
   ignoreGlobalFolder: [],
   ignoreCreatedFolder: [],
+  ignoreFiles: [],
   enableExperimentalHash: false,
   fileHashMap: {},
 };
@@ -47,40 +50,41 @@ export class UpdateTimeOnEditSettingsTab extends PluginSettingTab {
 
     containerEl.empty();
 
-    containerEl.createEl('h2', { text: 'Global settings' });
+    containerEl.createEl('h2', { text: '全局设置' });
 
     this.addExcludedFoldersSetting();
+    this.addExcludedFilesSetting();
     this.addTimeBetweenUpdates();
     this.addDateFormat();
     this.addEnableNumberProperties();
 
     new Setting(this.containerEl)
-      .setName('Update all files')
+      .setName('更新所有文件')
       .setDesc(
-        'This plugin will only work on new files, but if you want to update all files in your vault at once, you can do it here.',
+        '此插件仅对新文件生效，如果您想一次性更新仓库中的所有文件，可以在此操作。',
       )
       .addButton((cb) => {
-        cb.setButtonText('Update all files').onClick(() => {
+        cb.setButtonText('更新所有文件').onClick(() => {
           new UpdateAllModal(this.app, this.plugin).open();
         });
       });
 
-    containerEl.createEl('h2', { text: 'Updated at' });
+    containerEl.createEl('h2', { text: '更新时间' });
 
     this.addFrontMatterUpdated();
 
-    containerEl.createEl('h2', { text: 'Created at' });
+    containerEl.createEl('h2', { text: '创建时间' });
 
     this.addEnableCreated();
     this.addFrontMatterCreated();
     this.addExcludedCreatedFoldersSetting();
 
-    containerEl.createEl('h2', { text: 'Experimental settings' });
+    containerEl.createEl('h2', { text: '实验性设置' });
 
     new Setting(this.containerEl)
-      .setName('Enable hash matcher')
+      .setName('启用哈希匹配')
       .setDesc(
-        'Using a hash system to prevent too many updates happening, especially with sync.',
+        '使用哈希系统防止过多更新发生，特别是在同步场景下。',
       )
       .addToggle((cb) =>
         cb
@@ -91,7 +95,7 @@ export class UpdateTimeOnEditSettingsTab extends PluginSettingTab {
           }),
       )
       .addButton((cb) =>
-        cb.setButtonText('Fill initial cache').onClick(() => {
+        cb.setButtonText('填充初始缓存').onClick(() => {
           new UpdateAllCacheData(this.app, this.plugin).open();
         }),
       );
@@ -104,8 +108,8 @@ export class UpdateTimeOnEditSettingsTab extends PluginSettingTab {
   addDateFormat(): void {
     this.createDateFormatEditor({
       getValue: () => this.plugin.settings.dateFormat,
-      name: 'Date format',
-      description: 'The date format for read and write',
+      name: '日期格式',
+      description: '用于读取和写入的日期格式',
       setValue: (newValue) => (this.plugin.settings.dateFormat = newValue),
     });
   }
@@ -121,15 +125,15 @@ export class UpdateTimeOnEditSettingsTab extends PluginSettingTab {
       descr.append(
         description,
         descr.createEl('br'),
-        'Check ',
+        '参考 ',
         descr.createEl('a', {
           href: 'https://date-fns.org/v2.25.0/docs/format',
-          text: 'date-fns documentation',
+          text: 'date-fns 文档',
         }),
         descr.createEl('br'),
-        `Currently: ${format(new Date(), getValue())}`,
+        `当前显示: ${format(new Date(), getValue())}`,
         descr.createEl('br'),
-        `Obsidian default format for date properties: yyyy-MM-dd'T'HH:mm`,
+        `Obsidian 日期属性默认格式: yyyy-MM-dd'T'HH:mm`,
       );
       return descr;
     };
@@ -150,9 +154,9 @@ export class UpdateTimeOnEditSettingsTab extends PluginSettingTab {
 
   addEnableNumberProperties(): void {
     new Setting(this.containerEl)
-      .setName('Enable number property type')
+      .setName('启用数字属性类型')
       .setDesc(
-        'Assigns numbers to date properties (instead of strings) when using numeric formats, like Unix timestamps.',
+        '当使用数字格式（如 Unix 时间戳）时，将数字分配给日期属性（而非字符串）。',
       )
       .addToggle((toggle) =>
         toggle
@@ -166,8 +170,8 @@ export class UpdateTimeOnEditSettingsTab extends PluginSettingTab {
 
   addTimeBetweenUpdates(): void {
     new Setting(this.containerEl)
-      .setName('Minimum number of minutes between update')
-      .setDesc('If your files are updating too often, increase this.')
+      .setName('更新间隔最小分钟数')
+      .setDesc('如果文件更新过于频繁，请增加此值。')
       .addSlider((slider) =>
         slider
           .setLimits(1, 30, 1)
@@ -182,8 +186,8 @@ export class UpdateTimeOnEditSettingsTab extends PluginSettingTab {
 
   addEnableCreated(): void {
     new Setting(this.containerEl)
-      .setName('Enable the created front matter key update')
-      .setDesc('Currently, it is set to now if not present')
+      .setName('启用创建时间属性更新')
+      .setDesc('如果不存在，将设置为当前时间')
       .addToggle((toggle) =>
         toggle
           .setValue(this.plugin.settings.enableCreateTime)
@@ -197,8 +201,8 @@ export class UpdateTimeOnEditSettingsTab extends PluginSettingTab {
 
   addFrontMatterUpdated(): void {
     new Setting(this.containerEl)
-      .setName('Front matter updated name')
-      .setDesc('The key in the front matter yaml for the update time.')
+      .setName('更新时间属性名')
+      .setDesc('front matter 中用于存储更新时间的键名。')
       .addText((text) =>
         text
           .setPlaceholder('updated')
@@ -215,11 +219,11 @@ export class UpdateTimeOnEditSettingsTab extends PluginSettingTab {
       return;
     }
     new Setting(this.containerEl)
-      .setName('Front matter created name')
-      .setDesc('The key in the front matter yaml for the creation time')
+      .setName('创建时间属性名')
+      .setDesc('front matter 中用于存储创建时间的键名')
       .addText((text) =>
         text
-          .setPlaceholder('updated')
+          .setPlaceholder('created')
           .setValue(this.plugin.settings.headerCreated ?? '')
           .onChange(async (value) => {
             this.plugin.settings.headerCreated = value;
@@ -238,9 +242,9 @@ export class UpdateTimeOnEditSettingsTab extends PluginSettingTab {
       setValue: async (newValue) => {
         this.plugin.settings.ignoreCreatedFolder = newValue;
       },
-      name: 'Folder(s) to exclude for updating the created property',
+      name: '排除创建时间更新的文件夹',
       description:
-        'Any file updated in this folder will not trigger a created update.',
+        '这些文件夹中的文件不会触发创建时间更新。',
     });
   }
 
@@ -250,9 +254,21 @@ export class UpdateTimeOnEditSettingsTab extends PluginSettingTab {
       setValue: async (newValue) => {
         this.plugin.settings.ignoreGlobalFolder = newValue;
       },
-      name: 'Folder to exclude of all updates',
+      name: '排除所有更新的文件夹',
       description:
-        'Any file updated in this folder will not trigger an updated and created update.',
+        '这些文件夹中的文件不会触发任何更新时间或创建时间更新。',
+    });
+  }
+
+  addExcludedFilesSetting(): void {
+    this.doSearchAndRemoveFileList({
+      currentList: this.plugin.settings.ignoreFiles ?? [],
+      setValue: async (newValue) => {
+        this.plugin.settings.ignoreFiles = newValue;
+      },
+      name: '排除所有更新的笔记文件',
+      description:
+        '这些笔记文件不会触发任何更新时间或创建时间更新。',
     });
   }
 
@@ -269,13 +285,13 @@ export class UpdateTimeOnEditSettingsTab extends PluginSettingTab {
       .addSearch((cb) => {
         searchInput = cb;
         new FolderSuggest(this.app, cb.inputEl);
-        cb.setPlaceholder('Example: folder1/folder2');
+        cb.setPlaceholder('示例: 文件夹1/文件夹2');
         // @ts-ignore
         cb.containerEl.addClass('time_search');
       })
       .addButton((cb) => {
         cb.setIcon('plus');
-        cb.setTooltip('Add folder');
+        cb.setTooltip('添加文件夹');
         cb.onClick(async () => {
           if (!searchInput) {
             return;
@@ -291,8 +307,52 @@ export class UpdateTimeOnEditSettingsTab extends PluginSettingTab {
 
     currentList.forEach((ignoreFolder) =>
       new Setting(this.containerEl).setName(ignoreFolder).addButton((button) =>
-        button.setButtonText('Remove').onClick(async () => {
+        button.setButtonText('移除').onClick(async () => {
           await setValue(currentList.filter((value) => value !== ignoreFolder));
+          await this.saveSettings();
+          this.display();
+        }),
+      ),
+    );
+  }
+
+  doSearchAndRemoveFileList({
+    currentList,
+    setValue,
+    description,
+    name,
+  }: ArgsSearchAndRemoveFiles) {
+    let searchInput: SearchComponent | undefined;
+    new Setting(this.containerEl)
+      .setName(name)
+      .setDesc(description)
+      .addSearch((cb) => {
+        searchInput = cb;
+        new FileSuggest(this.app, cb.inputEl);
+        cb.setPlaceholder('示例: 笔记/文件名.md');
+        // @ts-ignore
+        cb.containerEl.addClass('time_search');
+      })
+      .addButton((cb) => {
+        cb.setIcon('plus');
+        cb.setTooltip('添加文件');
+        cb.onClick(async () => {
+          if (!searchInput) {
+            return;
+          }
+          const newFile = searchInput.getValue();
+
+          await setValue([...currentList, newFile].filter(onlyUniqueArray));
+          await this.saveSettings();
+          searchInput.setValue('');
+          this.display();
+        });
+      });
+
+    currentList.forEach((ignoreFile) =>
+      new Setting(this.containerEl).setName(ignoreFile).addButton((button) =>
+        button.setButtonText('移除').onClick(async () => {
+          await setValue(currentList.filter((value) => value !== ignoreFile));
           await this.saveSettings();
           this.display();
         }),
@@ -309,6 +369,13 @@ type DateFormatArgs = {
 };
 
 type ArgsSearchAndRemove = {
+  name: string;
+  description: string;
+  currentList: string[];
+  setValue: (newValue: string[]) => Promise<void>;
+};
+
+type ArgsSearchAndRemoveFiles = {
   name: string;
   description: string;
   currentList: string[];

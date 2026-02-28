@@ -43,7 +43,7 @@ export default class UpdateTimeOnSavePlugin extends Plugin {
   }
 
   async onload() {
-    this.log('loading plugin IN DEV');
+    this.log('加载插件（开发模式）');
 
     await this.loadSettings();
 
@@ -79,9 +79,14 @@ export default class UpdateTimeOnSavePlugin extends Plugin {
       return true;
     }
 
-    const fileContent = (await this.app.vault.read(file)).trim();
+    // 检查文件是否在排除列表中
+    const ignoreFiles = this.settings.ignoreFiles ?? [];
+    if (ignoreFiles.includes(file.path)) {
+      this.log('忽略文件：在排除列表中');
+      return true;
+    }
 
-    const sha = this.hashString(fileContent);
+    const fileContent = (await this.app.vault.read(file)).trim();
 
     if (fileContent.length === 0) {
       return true;
@@ -92,7 +97,7 @@ export default class UpdateTimeOnSavePlugin extends Plugin {
       if (maybeHash) {
         const sha = this.hashString(fileContent);
         if (sha === maybeHash) {
-          this.log('Ignoring file because, sha same');
+          this.log('忽略文件：内容未变化');
           return true;
         }
       }
@@ -176,8 +181,8 @@ export default class UpdateTimeOnSavePlugin extends Plugin {
       await this.app.fileManager.processFrontMatter(
         file,
         (frontmatter) => {
-          this.log('current metadata: ', frontmatter);
-          this.log('current stat: ', file.stat);
+          this.log('当前 metadata: ', frontmatter);
+          this.log('当前 stat: ', file.stat);
           const updatedKey = this.settings.headerUpdated;
           const createdKey = this.settings.headerCreated;
 
@@ -185,7 +190,7 @@ export default class UpdateTimeOnSavePlugin extends Plugin {
           const cTime = this.parseDate(file.stat.ctime);
 
           if (!mTime || !cTime) {
-            this.log('Something wrong happen, skipping');
+            this.log('解析日期失败，跳过');
             return;
           }
 
@@ -198,25 +203,25 @@ export default class UpdateTimeOnSavePlugin extends Plugin {
           const currentMTimeOnFile = this.parseDate(frontmatter[updatedKey]);
 
           if (!frontmatter[updatedKey] || !currentMTimeOnFile) {
-            this.log('Update updatedKey');
+            this.log('更新 updatedKey');
             frontmatter[updatedKey] = this.formatDate(mTime);
             return;
           }
 
           if (this.shouldUpdateValue(mTime, currentMTimeOnFile)) {
             frontmatter[updatedKey] = this.formatDate(mTime);
-            this.log('Update updatedKey');
+            this.log('更新 updatedKey');
             return;
           }
-          this.log('Skipping updateKey');
+          this.log('跳过更新 updatedKey');
         },
         { ctime: file.stat.ctime, mtime: file.stat.mtime },
       );
       await this.populateCacheForFile(file);
     } catch (e: any) {
       if (e?.name === 'YAMLParseError') {
-        const errorMessage = `Update time on edit failed
-Malformed frontamtter on this file : ${file.path}
+        const errorMessage = `更新时间插件出错
+此文件的 front matter 格式错误：${file.path}
 
 ${e.message}`;
         new Notice(errorMessage, 4000);
@@ -233,11 +238,11 @@ ${e.message}`;
   }
 
   setupOnEditHandler() {
-    this.log('Setup handler');
+    this.log('设置事件处理器');
 
     this.registerEvent(
       this.app.vault.on('modify', (file) => {
-        this.log('TRIGGER FROM MODIFY');
+        this.log('触发 MODIFY 事件');
         return this.handleFileChange(file, 'modify');
       }),
     );
@@ -267,7 +272,7 @@ ${e.message}`;
   }
 
   onunload() {
-    this.log('unloading Update time on edit plugin');
+    this.log('卸载 Update time on edit 插件');
   }
 
   log(...data: any[]) {

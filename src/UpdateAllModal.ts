@@ -44,7 +44,7 @@ export class UpdateAllModal extends Modal {
     wrapperBar.append(progress, fileCounter);
     wrapperBar.addClass('progress-section');
 
-    const header = createTextSpan('Updating files...');
+    const header = createTextSpan('正在更新文件...');
 
     this.divContainer.replaceChildren(header, wrapperBar);
 
@@ -53,7 +53,7 @@ export class UpdateAllModal extends Modal {
     }
     for (let i = 0; i < allMdFiles.length; i++) {
       if (!this.isOpened) {
-        new Notice('Bulk update for header stopped.', 2000);
+        new Notice('批量更新已停止。', 2000);
         return;
       }
       updateCount(i + 1);
@@ -61,10 +61,10 @@ export class UpdateAllModal extends Modal {
     }
 
     const doneMessage = createTextSpan(
-      'Done ! You can safely close this modal.',
+      '完成！您可以安全关闭此对话框。',
     );
     const el = new Setting(this.containerEl).addButton((btn) => {
-      btn.setButtonText('Close').onClick(() => {
+      btn.setButtonText('关闭').onClick(() => {
         this.close();
       });
     }).settingEl;
@@ -76,12 +76,12 @@ export class UpdateAllModal extends Modal {
     let { contentEl } = this;
     contentEl.addClass('update-time-on-edit--bulk-modal');
     const header = contentEl.createEl('h2', {
-      text: `Finding eligible files in the vault...`,
+      text: `正在查找仓库中符合条件的文件...`,
     });
 
     const allMdFiles = await this.plugin.getAllFilesPossiblyAffected();
 
-    header.setText(`Update all ${allMdFiles.length} files in the vault`);
+    header.setText(`更新仓库中的所有 ${allMdFiles.length} 个文件`);
 
     const div = contentEl.createDiv();
     this.divContainer = div;
@@ -89,12 +89,12 @@ export class UpdateAllModal extends Modal {
     div.append(
       div.createSpan({
         text:
-          'This will update all created and updated time on files affected by this plugin',
+          '这将更新受此插件影响的所有文件的创建时间和更新时间',
       }),
       createBr(),
       createBr(),
       div.createSpan({
-        text: `WARNING: this action will affect ${allMdFiles.length} in your vault. Make sure you tuned the settings correctly, and make a backup.`,
+        text: `警告：此操作将影响您仓库中的 ${allMdFiles.length} 个文件。请确保您已正确调整设置，并做好备份。`,
         cls: 'update-time-on-edit--settings--warn',
       }),
       createBr(),
@@ -104,7 +104,7 @@ export class UpdateAllModal extends Modal {
     this.settingsSection = new Setting(contentEl)
       .addButton((btn) => {
         btn
-          .setButtonText('Run')
+          .setButtonText('执行')
           .setCta()
           .onClick(() => {
             this.onRun();
@@ -113,7 +113,7 @@ export class UpdateAllModal extends Modal {
       })
       .addButton((btn) => {
         this.cancelButton = btn;
-        btn.setButtonText('Cancel').onClick(() => {
+        btn.setButtonText('取消').onClick(() => {
           this.close();
         });
       });

@@ -44,7 +44,7 @@ export class UpdateAllCacheData extends Modal {
     wrapperBar.append(progress, fileCounter);
     wrapperBar.addClass('progress-section');
 
-    const header = createTextSpan('Updating cache...');
+    const header = createTextSpan('正在更新缓存...');
 
     this.divContainer.replaceChildren(header, wrapperBar);
 
@@ -53,7 +53,7 @@ export class UpdateAllCacheData extends Modal {
     }
     for (let i = 0; i < allMdFiles.length; i++) {
       if (!this.isOpened) {
-        new Notice('Bulk update for header stopped.', 2000);
+        new Notice('批量更新已停止。', 2000);
         return;
       }
       updateCount(i + 1);
@@ -61,10 +61,10 @@ export class UpdateAllCacheData extends Modal {
     }
 
     const doneMessage = createTextSpan(
-      'Done ! You can safely close this modal.',
+      '完成！您可以安全关闭此对话框。',
     );
     const el = new Setting(this.containerEl).addButton((btn) => {
-      btn.setButtonText('Close').onClick(() => {
+      btn.setButtonText('关闭').onClick(() => {
         this.close();
       });
     }).settingEl;
@@ -76,12 +76,12 @@ export class UpdateAllCacheData extends Modal {
     let { contentEl } = this;
     contentEl.addClass('update-time-on-edit--bulk-modal');
     const header = contentEl.createEl('h2', {
-      text: `Finding eligible files in the vault...`,
+      text: `正在查找仓库中符合条件的文件...`,
     });
 
     const allMdFiles = await this.plugin.getAllFilesPossiblyAffected();
 
-    header.setText(`Create all ${allMdFiles.length} files in the hash cache`);
+    header.setText(`为 ${allMdFiles.length} 个文件创建哈希缓存`);
 
     const div = contentEl.createDiv();
     this.divContainer = div;
@@ -89,7 +89,7 @@ export class UpdateAllCacheData extends Modal {
     div.append(
       div.createSpan({
         text:
-          'This will update all cache data on files affected by this plugin',
+          '这将更新受此插件影响的所有文件的缓存数据',
       }),
       createBr(),
       createBr(),
@@ -98,7 +98,7 @@ export class UpdateAllCacheData extends Modal {
     this.settingsSection = new Setting(contentEl)
       .addButton((btn) => {
         btn
-          .setButtonText('Run')
+          .setButtonText('执行')
           .setCta()
           .onClick(() => {
             this.onRun();
@@ -107,7 +107,7 @@ export class UpdateAllCacheData extends Modal {
       })
       .addButton((btn) => {
         this.cancelButton = btn;
-        btn.setButtonText('Cancel').onClick(() => {
+        btn.setButtonText('取消').onClick(() => {
           this.close();
         });
       });

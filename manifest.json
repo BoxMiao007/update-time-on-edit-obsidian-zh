@@ -1,10 +1,11 @@
 {
-	"id": "update-time-on-edit",
-	"name": "Update time on edit",
+	"id": "update-time-on-edit-zh",
+	"name": "Update time on edit (中文版)",
 	"version": "2.4.0",
 	"minAppVersion": "1.4.4",
-	"description": "Keep front matter in sync with the last edit time",
-	"author": "@beaussan",
-	"authorUrl": "https://github.com/beaussan",
+	"description": "自动同步文件的创建时间和修改时间到 front matter 元数据中",
+	"author": "BoxMiao007",
+	"authorUrl": "https://github.com/BoxMiao007",
+	"repositoryUrl": "https://github.com/BoxMiao007/update-time-on-edit-obsidian-zh",
 	"isDesktopOnly": false
 }

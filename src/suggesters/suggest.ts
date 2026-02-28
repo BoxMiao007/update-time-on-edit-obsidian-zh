@@ -21,13 +21,13 @@ class Suggest<T> {
     containerEl.on(
       'click',
       '.suggestion-item',
-      // @ts-ignore todo: fix later
+      // @ts-expect-error Obsidian on() delegateTarget type is HTMLElement, not HTMLDivElement
       this.onSuggestionClick.bind(this),
     );
     containerEl.on(
       'mousemove',
       '.suggestion-item',
-      // @ts-ignore todo: fix later
+      // @ts-expect-error Obsidian on() delegateTarget type is HTMLElement, not HTMLDivElement
       this.onSuggestionMouseover.bind(this),
     );
 
@@ -98,7 +98,7 @@ class Suggest<T> {
 
     this.selectedItem = normalizedIndex;
 
-    if (scrollIntoView) {
+    if (scrollIntoView && selectedSuggestion) {
       selectedSuggestion.scrollIntoView(false);
     }
   }
@@ -108,8 +108,7 @@ export abstract class TextInputSuggest<T> implements ISuggestOwner<T> {
   protected app: App;
   protected inputEl: HTMLInputElement | HTMLTextAreaElement;
 
-  // @ts-ignore todo: fix later
-  private popper: PopperInstance;
+  private popper: PopperInstance | null = null;
   private scope: Scope;
   private suggestEl: HTMLElement;
   private suggest: Suggest<T>;
@@ -190,7 +189,7 @@ export abstract class TextInputSuggest<T> implements ISuggestOwner<T> {
     (<any>this.app).keymap.popScope(this.scope);
 
     this.suggest.setSuggestions([]);
-    if (this.popper) this.popper.destroy();
+    this.popper?.destroy();
     this.suggestEl.detach();
   }
 

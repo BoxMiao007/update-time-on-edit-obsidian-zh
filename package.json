@@ -1,7 +1,7 @@
 {
-  "name": "obsidian-update-time-on-edit",
+  "name": "obsidian-update-time-on-edit-zh",
   "version": "2.4.0",
-  "description": "Keep the updated front matter header in sync with the last edit",
+  "description": "自动同步文件的创建时间和修改时间到 front matter 元数据中（中文版）",
   "main": "main.js",
   "scripts": {
     "dev": "node esbuild.config.mjs",
@@ -10,9 +10,13 @@
     "format:write": "prettier --write \"**/*.{ts,json}\"",
     "format:check": "prettier --list-different \"**/*.{ts,json}\""
   },
-  "keywords": [],
-  "author": "@beaussan",
+  "keywords": ["obsidian", "plugin", "frontmatter", "chinese"],
+  "author": "BoxMiao007",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/BoxMiao007/update-time-on-edit-obsidian-zh.git"
+  },
   "devDependencies": {
     "@types/jest": "27.0.2",
     "@types/node": "^16.11.6",

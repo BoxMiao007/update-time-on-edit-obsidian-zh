@@ -202,7 +202,7 @@ export class UpdateTimeOnEditSettingsTab extends PluginSettingTab {
   addFrontMatterUpdated(): void {
     new Setting(this.containerEl)
       .setName('更新时间属性名')
-      .setDesc('front matter 中用于存储更新时间的键名。')
+      .setDesc('前置元数据中用于存储更新时间的键名。')
       .addText((text) =>
         text
           .setPlaceholder('updated')
@@ -220,7 +220,7 @@ export class UpdateTimeOnEditSettingsTab extends PluginSettingTab {
     }
     new Setting(this.containerEl)
       .setName('创建时间属性名')
-      .setDesc('front matter 中用于存储创建时间的键名')
+      .setDesc('前置元数据中用于存储创建时间的键名')
       .addText((text) =>
         text
           .setPlaceholder('created')
@@ -296,7 +296,11 @@ export class UpdateTimeOnEditSettingsTab extends PluginSettingTab {
           if (!searchInput) {
             return;
           }
-          const newFolder = searchInput.getValue();
+          const newFolder = searchInput.getValue().trim();
+
+          if (!newFolder) {
+            return;
+          }
 
           await setValue([...currentList, newFolder].filter(onlyUniqueArray));
           await this.saveSettings();
@@ -340,7 +344,11 @@ export class UpdateTimeOnEditSettingsTab extends PluginSettingTab {
           if (!searchInput) {
             return;
           }
-          const newFile = searchInput.getValue();
+          const newFile = searchInput.getValue().trim();
+
+          if (!newFile) {
+            return;
+          }
 
           await setValue([...currentList, newFile].filter(onlyUniqueArray));
           await this.saveSettings();

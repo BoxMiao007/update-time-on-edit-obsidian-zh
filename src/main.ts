@@ -219,18 +219,22 @@ export default class UpdateTimeOnSavePlugin extends Plugin {
       );
       await this.populateCacheForFile(file);
     } catch (e: any) {
-      if (e?.name === 'YAMLParseError') {
-        const errorMessage = `更新时间插件出错
-此文件的 front matter 格式错误：${file.path}
+      const errorMessage = e?.name === 'YAMLParseError'
+        ? `更新时间插件出错
+此文件的前置元数据格式错误：${file.path}
 
-${e.message}`;
-        new Notice(errorMessage, 4000);
-        console.error(errorMessage);
-        return {
-          status: 'error',
-          error: e,
-        };
-      }
+${e.message}`
+        : `更新时间插件出错
+处理文件时发生错误：${file.path}
+
+${e?.message || '未知错误'}`;
+
+      new Notice(errorMessage, 4000);
+      console.error('[UTOE] 错误:', e);
+      return {
+        status: 'error',
+        error: e,
+      };
     }
     return {
       status: 'ok',
@@ -249,6 +253,9 @@ ${e.message}`;
 
     this.registerEvent(
       this.app.vault.on('rename', (file, oldPath) => {
+        if (!isTFile(file)) {
+          return;
+        }
         const hash = this.settings.fileHashMap[oldPath];
         if (!hash) {
           return;
@@ -261,6 +268,9 @@ ${e.message}`;
 
     this.registerEvent(
       this.app.vault.on('delete', async (file) => {
+        if (!isTFile(file)) {
+          return;
+        }
         const sha = this.settings.fileHashMap[file.path];
         if (!sha) {
           return;

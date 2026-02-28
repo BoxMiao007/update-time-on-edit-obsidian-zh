@@ -119,6 +119,8 @@ yarn version
 3. Canvas 文件和 Excalidraw 文件会被自动忽略
 4. 空文件会被忽略
 
+---
+
 <details>
   <summary>原始内容</summary>
 
